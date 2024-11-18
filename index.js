@@ -65,8 +65,14 @@ async function handleSubmitCommand(interaction) {
     );
   }
 
-  // Get or initialize user's reels array using Map
+  // Get or initialize user's reels array
   const userReels = submittedReels.get(interaction.user.id) || [];
+
+  // Check for duplicate submission
+  if (userReels.some((reel) => reel.shortCode === shortCode)) {
+    return interaction.editReply("This reel has already been submitted!");
+  }
+
   userReels.push(reelData);
   submittedReels.set(interaction.user.id, userReels);
 
@@ -74,8 +80,18 @@ async function handleSubmitCommand(interaction) {
     .setColor("#00ff00")
     .setTitle("Reel Submitted Successfully")
     .addFields(
-      { name: "Views", value: reelData.views.toString(), inline: true },
-      { name: "Likes", value: reelData.likes.toString(), inline: true }
+      { name: "Views", value: reelData.views.toLocaleString(), inline: true },
+      { name: "Likes", value: reelData.likes.toLocaleString(), inline: true },
+      {
+        name: "Comments",
+        value: reelData.comments.toLocaleString(),
+        inline: true,
+      },
+      {
+        name: "Duration",
+        value: `${reelData.duration.toFixed(1)}s`,
+        inline: true,
+      }
     )
     .setTimestamp();
 
@@ -135,27 +151,40 @@ function extractShortCode(url) {
 
 async function fetchReelData(shortCode) {
   try {
-    // Note: Instagram's public API endpoints might be restricted
-    // You might need to use Instagram's official API or a third-party service
-    const response = await axios.get(
-      `https://www.instagram.com/p/${shortCode}/?__a=1`,
-      {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        },
-      }
-    );
+    console.log("Fetching data for shortCode:", shortCode);
 
-    const data = response.data.graphql.shortcode_media;
+    const response = await axios.request({
+      method: "GET",
+      url: "https://instagram-bulk-profile-scrapper.p.rapidapi.com/clients/api/ig/media_by_id",
+      params: { shortcode: shortCode },
+      headers: {
+        "X-RapidAPI-Key": process.env.INSTAGRAM_API_KEY,
+        "X-RapidAPI-Host": "instagram-bulk-profile-scrapper.p.rapidapi.com",
+      },
+    });
+
+    // The response is an array with a single object containing an 'items' array
+    const data = response.data[0]?.items[0];
+
+    if (!data) {
+      console.error("No data found in response");
+      return null;
+    }
+
     return {
-      views: data.video_view_count || 0,
-      likes: data.edge_media_preview_like?.count || 0,
+      views: data.view_count || data.play_count || 0,
+      likes: data.like_count || 0,
+      comments: data.comment_count || 0,
+      duration: data.video_duration || 0,
+      hasAudio: data.has_audio || false,
       timestamp: Date.now(),
       shortCode,
     };
   } catch (error) {
-    console.error(`Error fetching reel data: ${error.message}`);
+    console.error(
+      `Error fetching reel data:`,
+      error.response?.data || error.message
+    );
     return null;
   }
 }
