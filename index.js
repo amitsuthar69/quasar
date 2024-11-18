@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { Client, GatewayIntentBits } = require("discord.js");
+const { Client, GatewayIntentBits, EmbedBuilder } = require("discord.js");
 const axios = require("axios");
 
 // Initialize Discord client
@@ -7,101 +7,152 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
 });
 
-// Store submitted reels for each user
-const submittedReels = {};
+// Store submitted reels for each user (Note: This will reset when bot restarts)
+const submittedReels = new Map();
 
 client.on("ready", () => {
-  console.log("Discord bot ready!");
+  console.log(`Logged in as ${client.user.tag}!`);
 });
 
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
-  const command = interaction.commandName;
+  try {
+    switch (interaction.commandName) {
+      case "ping":
+        const startTime = Date.now();
+        await interaction.reply("Pong!");
+        const endTime = Date.now();
+        await interaction.editReply(`Pong! Latency: ${endTime - startTime}ms`);
+        break;
 
-  const urlReceived = interaction.options.getString("url");
+      case "submit":
+        await handleSubmitCommand(interaction);
+        break;
 
-  if (command === "ping") {
-    await interaction.reply("Pong!");
-  }
-  if (command === "submit") {
-    await interaction.reply(`Your IG link: ${urlReceived}`);
+      case "stats":
+        await handleStatsCommand(interaction);
+        break;
+    }
+  } catch (error) {
+    console.error("Error handling command:", error);
+    const errorMessage =
+      "An error occurred while processing your command. Please try again later.";
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp({ content: errorMessage, ephemeral: true });
+    } else {
+      await interaction.reply({ content: errorMessage, ephemeral: true });
+    }
   }
 });
 
-client.on("messageCreate", async (msg) => {
-  if (!msg.content.startsWith("/")) return;
+async function handleSubmitCommand(interaction) {
+  await interaction.deferReply();
 
-  const [cmd, ...args] = msg.content.slice(1).split(" ");
-
-  switch (cmd.toLowerCase()) {
-    case "submit": {
-      const url = args.join(" ");
-
-      // Validate URL
-      if (!url || !url.includes("instagram.com/reel/")) {
-        msg.reply("Invalid Instagram Reel URL. Please try again.");
-        return;
-      }
-
-      // Extract reel ID from URL
-      const shortCode = url.split("/").pop().split("?")[0];
-
-      // Fetch reel data
-      const reelData = await fetchReelData(shortCode);
-
-      if (!reelData) {
-        msg.reply("Failed to fetch reel data. Try again later.");
-        return;
-      }
-
-      // Store reel data for the user
-      if (!submittedReels[msg.author.id]) {
-        submittedReels[msg.author.id] = [];
-      }
-      submittedReels[msg.author.id].push(reelData);
-
-      msg.reply(`Reel submitted successfully!`);
-      break;
-    }
-    case "stats": {
-      const userReels = submittedReels[msg.author.id] || [];
-
-      if (userReels.length === 0) {
-        msg.reply("No reels submitted yet.");
-        return;
-      }
-
-      const stats = calculateStats(userReels);
-
-      msg.reply(
-        `Total views: ${stats.totalViews}\nTotal likes: ${stats.totalLikes}`
-      );
-      break;
-    }
-    default:
-      msg.reply("Unknown command. Try `/submit <url>` or `/stats`");
+  const url = interaction.options.getString("url");
+  if (!isValidInstagramReelUrl(url)) {
+    return interaction.editReply(
+      "Invalid Instagram Reel URL. Please provide a valid Instagram Reel link."
+    );
   }
-});
 
-client.login(process.env.DISCORD_BOT_TOKEN);
+  const shortCode = extractShortCode(url);
+  const reelData = await fetchReelData(shortCode);
 
-// Helper function to fetch reel data
+  if (!reelData) {
+    return interaction.editReply(
+      "Failed to fetch reel data. Please check the URL and try again."
+    );
+  }
+
+  // Get or initialize user's reels array using Map
+  const userReels = submittedReels.get(interaction.user.id) || [];
+  userReels.push(reelData);
+  submittedReels.set(interaction.user.id, userReels);
+
+  const embed = new EmbedBuilder()
+    .setColor("#00ff00")
+    .setTitle("Reel Submitted Successfully")
+    .addFields(
+      { name: "Views", value: reelData.views.toString(), inline: true },
+      { name: "Likes", value: reelData.likes.toString(), inline: true }
+    )
+    .setTimestamp();
+
+  await interaction.editReply({ embeds: [embed] });
+}
+
+async function handleStatsCommand(interaction) {
+  const userReels = submittedReels.get(interaction.user.id) || [];
+
+  if (userReels.length === 0) {
+    return interaction.reply("You haven't submitted any reels yet!");
+  }
+
+  const stats = calculateStats(userReels);
+  const avgViews = Math.round(stats.totalViews / userReels.length);
+  const avgLikes = Math.round(stats.totalLikes / userReels.length);
+
+  const embed = new EmbedBuilder()
+    .setColor("#0099ff")
+    .setTitle("Your Instagram Reel Statistics")
+    .addFields(
+      { name: "Total Reels", value: userReels.length.toString(), inline: true },
+      {
+        name: "Total Views",
+        value: stats.totalViews.toLocaleString(),
+        inline: true,
+      },
+      {
+        name: "Total Likes",
+        value: stats.totalLikes.toLocaleString(),
+        inline: true,
+      },
+      { name: "Average Views", value: avgViews.toLocaleString(), inline: true },
+      { name: "Average Likes", value: avgLikes.toLocaleString(), inline: true }
+    )
+    .setTimestamp();
+
+  await interaction.reply({ embeds: [embed] });
+}
+
+function isValidInstagramReelUrl(url) {
+  try {
+    const urlObj = new URL(url);
+    return (
+      urlObj.hostname === "www.instagram.com" ||
+      urlObj.hostname === "instagram.com"
+    );
+  } catch {
+    return false;
+  }
+}
+
+function extractShortCode(url) {
+  const matches = url.match(/\/reel\/([A-Za-z0-9_-]+)/);
+  return matches ? matches[1] : null;
+}
+
 async function fetchReelData(shortCode) {
   try {
+    // Note: Instagram's public API endpoints might be restricted
+    // You might need to use Instagram's official API or a third-party service
     const response = await axios.get(
-      `https://www.instagram.com/p/${shortCode}/?__a=1`
+      `https://www.instagram.com/p/${shortCode}/?__a=1`,
+      {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        },
+      }
     );
+
     const data = response.data.graphql.shortcode_media;
-
-    if (!data || !data.video_view_count) {
-      return null;
-    }
-
     return {
-      views: data.video_view_count,
-      likes: data.like_count,
+      views: data.video_view_count || 0,
+      likes: data.edge_media_preview_like?.count || 0,
       timestamp: Date.now(),
+      shortCode,
     };
   } catch (error) {
     console.error(`Error fetching reel data: ${error.message}`);
@@ -109,15 +160,14 @@ async function fetchReelData(shortCode) {
   }
 }
 
-// Helper function to calculate stats
 function calculateStats(reels) {
-  let totalViews = 0;
-  let totalLikes = 0;
-
-  reels.forEach((reel) => {
-    totalViews += reel.views;
-    totalLikes += reel.likes;
-  });
-
-  return { totalViews, totalLikes };
+  return reels.reduce(
+    (acc, reel) => ({
+      totalViews: acc.totalViews + (reel.views || 0),
+      totalLikes: acc.totalLikes + (reel.likes || 0),
+    }),
+    { totalViews: 0, totalLikes: 0 }
+  );
 }
+
+client.login(process.env.DISCORD_BOT_TOKEN);

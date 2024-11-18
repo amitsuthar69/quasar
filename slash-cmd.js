@@ -1,36 +1,49 @@
+// slash-cmd.js
+require("dotenv").config();
 const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v10");
 const { SlashCommandBuilder } = require("discord.js");
-require("dotenv").config();
 
-const botId = process.env.DISCORD_BOT_ID;
-const serverId = process.env.DISCORD_SERVER_ID;
-const botToken = process.env.DISCORD_BOT_TOKEN;
+const commands = [
+  new SlashCommandBuilder()
+    .setName("ping")
+    .setDescription("Check bot's response time"),
 
-const rest = new REST({ version: "10" }).setToken(botToken);
+  new SlashCommandBuilder()
+    .setName("submit")
+    .setDescription("Submit an Instagram Reel for tracking")
+    .addStringOption((option) =>
+      option
+        .setName("url")
+        .setDescription("The Instagram Reel URL")
+        .setRequired(true)
+    ),
 
-const slashRegister = async () => {
+  new SlashCommandBuilder()
+    .setName("stats")
+    .setDescription("View statistics for your submitted reels"),
+];
+
+async function registerCommands() {
   try {
-    await rest.put(Routes.applicationGuildCommands(botId, serverId), {
-      body: [
-        new SlashCommandBuilder()
-          .setName("ping")
-          .setDescription("Pings the bot"),
+    const rest = new REST({ version: "10" }).setToken(
+      process.env.DISCORD_BOT_TOKEN
+    );
 
-        new SlashCommandBuilder()
-          .setName("submit")
-          .setDescription("Takes IG Reel url")
-          .addStringOption((option) => {
-            return option
-              .setName("url")
-              .setDescription("IG Reel URL")
-              .setRequired(true);
-          }),
-      ],
-    });
+    console.log("Started refreshing application (/) commands.");
+
+    await rest.put(
+      Routes.applicationGuildCommands(
+        process.env.DISCORD_BOT_ID,
+        process.env.DISCORD_SERVER_ID
+      ),
+      { body: commands }
+    );
+
+    console.log("Successfully reloaded application (/) commands.");
   } catch (error) {
-    console.log(error);
+    console.error("Error registering commands:", error);
   }
-};
+}
 
-slashRegister();
+registerCommands();
