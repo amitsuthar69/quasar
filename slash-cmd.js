@@ -22,6 +22,44 @@ const commands = [
   new SlashCommandBuilder()
     .setName("stats")
     .setDescription("View statistics for your submitted reels"),
+
+  new SlashCommandBuilder()
+    .setName("register")
+    .setDescription("Register your social media account")
+    .addStringOption((option) =>
+      option
+        .setName("platform")
+        .setDescription("Social media platform")
+        .setRequired(true)
+        .addChoices({ name: "Instagram", value: "instagram" })
+    )
+    .addStringOption((option) =>
+      option
+        .setName("username")
+        .setDescription("Your social media username")
+        .setRequired(true)
+    ),
+
+  new SlashCommandBuilder()
+    .setName("add")
+    .setDescription("Add another social media account")
+    .addStringOption((option) =>
+      option
+        .setName("platform")
+        .setDescription("Social media platform")
+        .setRequired(true)
+        .addChoices({ name: "Instagram", value: "instagram" })
+    )
+    .addStringOption((option) =>
+      option
+        .setName("username")
+        .setDescription("Your social media username")
+        .setRequired(true)
+    ),
+
+  new SlashCommandBuilder()
+    .setName("leaderboard")
+    .setDescription("View top 10 users by engagement"),
 ];
 
 async function registerCommands() {
