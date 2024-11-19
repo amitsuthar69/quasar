@@ -1,11 +1,11 @@
 require("dotenv").config();
-const { Client, GatewayIntentBits, EmbedBuilder } = require("discord.js");
-const axios = require("axios");
+const { Client, GatewayIntentBits } = require("discord.js");
 const mongoose = require("mongoose");
 const handleRegisterCommand = require("./helpers/register");
 const handleAddCommand = require("./helpers/add");
 const handleSubmitCommand = require("./helpers/submit");
 const handleStatsCommand = require("./helpers/stats");
+const handleLeaderboardCommand = require("./helpers/leaderboard");
 
 const DB_URL = process.env.MONGODB_URL;
 
@@ -52,6 +52,10 @@ client.on("interactionCreate", async (interaction) => {
 
       case "stats":
         await handleStatsCommand(interaction);
+        break;
+
+      case "leaderboard":
+        await handleLeaderboardCommand(interaction);
         break;
     }
   } catch (error) {

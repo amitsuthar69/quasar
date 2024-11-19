@@ -14,8 +14,7 @@
     "axios": "^1.7.7",
     "discord.js": "^14.16.3",
     "dotenv": "^16.4.5",
-    "mongoose": "^8.8.1",
-    "puppeteer": "^23.8.0"
+    "mongoose": "^8.8.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.7"

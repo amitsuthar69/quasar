@@ -17,6 +17,7 @@ const ReelUrlSchema = new mongoose.Schema({
   shortCode: String,
   submittedAt: Date,
   platform: String,
+  lastUpdated: { type: Date, default: Date.now }, // to track updated view changes
   stats: {
     views: Number,
     likes: Number,
