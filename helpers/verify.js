@@ -19,6 +19,7 @@ async function verifyInstagramAccount(username, expectedCode) {
   try {
     const response = await axios.request(options);
     const bio = response.data[0]?.biography || "";
+    console.log("\nuserN:", username, "\nexpC: ", expectedCode, "\nbio:", bio);
     return bio.includes(expectedCode); // Check if the code is in the bio
   } catch (error) {
     console.error("Error verifying Instagram account:", error);

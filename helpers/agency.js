@@ -5,6 +5,8 @@ async function handleAgencyRegistration(interaction) {
   const serverName = interaction.options.getString("server_name");
   const ownerId = interaction.guild.ownerId;
 
+  console.log("server, name, owner: ", serverId, serverName, ownerId);
+
   if (interaction.user.id !== ownerId) {
     return interaction.reply({
       content: "Only the server owner can register this server!",
@@ -25,6 +27,7 @@ async function handleAgencyRegistration(interaction) {
     // Register the agency
     const newAgency = new Agency({
       discordServerId: serverId,
+      agencyId: interaction.guild.id,
       serverName: serverName,
       isSubscribed: true,
       createdAt: new Date(),

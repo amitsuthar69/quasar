@@ -8,6 +8,7 @@ async function handleStatsCommand(interaction) {
     return interaction.reply("You haven't submitted any reels yet!");
   }
 
+  // 2. Retrieve the current server (agency)
   const agency = await Agency.findOne({
     discordServerId: interaction.guild.id,
   });
@@ -15,7 +16,7 @@ async function handleStatsCommand(interaction) {
     return interaction.reply("This server is not registered as an agency.");
   }
 
-  // 2. Retrieve the active campaign for the server (agency)
+  // 3. Retrieve the active campaign for the server (agency)
   const activeCampaign = await Campaign.findOne({
     isActive: true,
     agencyId: agency._id,
@@ -25,30 +26,40 @@ async function handleStatsCommand(interaction) {
     return interaction.reply("No active campaign found for this server.");
   }
 
-  // 3. Calculate total views and total money earned for the active campaign
+  // 4. Filter the user's reels for this server's active campaign
   const userContribution = user.campaigns.find(
     (c) => c.campaignId.toString() === activeCampaign._id.toString()
   );
 
-  let totalViews = 0;
-  let totalMoney = 0;
-
-  if (userContribution) {
-    totalViews = userContribution.viewsContributed || 0;
-    totalMoney = userContribution.moneyEarned || 0;
+  if (!userContribution) {
+    return interaction.reply(
+      "You have not contributed to the active campaign on this server."
+    );
   }
 
-  // 4. Initialize total view, like, and comment counters
+  let totalViews = 0;
   let totalLikes = 0;
   let totalComments = 0;
+  let totalMoney = userContribution.moneyEarned || 0;
   let reelsUpdated = 0;
 
-  // 5. Format reel statistics while checking 8-hour span
+  // Filter only reels that are part of this campaign
+  const relevantReels = user.reelUrls.filter(
+    (reel) => reel.campaignId?.toString() === activeCampaign._id.toString()
+  );
+
+  if (relevantReels.length === 0) {
+    return interaction.reply(
+      "You have not submitted any reels for the active campaign on this server."
+    );
+  }
+
+  // 5. Update and calculate reel statistics
   const now = Date.now();
   const eightHours = 8 * 60 * 60 * 1000;
 
   const updatedReels = await Promise.all(
-    user.reelUrls.map(async (reel) => {
+    relevantReels.map(async (reel) => {
       const isOutdated =
         now - new Date(reel.lastUpdated).getTime() > eightHours;
 
@@ -75,19 +86,18 @@ async function handleStatsCommand(interaction) {
     await user.save();
   }
 
-  // 6. List Instagram usernames added by the user
+  // 6. Prepare the response
   const usernames = user.instagramAccounts
     .map((account) => account.username)
     .join(", ");
 
-  // 7. Create the message with statistics
   const embed = new EmbedBuilder()
     .setColor("#0099ff")
     .setTitle("Your Instagram Clips Statistics")
     .addFields(
       {
         name: "IG Reel Clips",
-        value: user.reelUrls.length.toString(),
+        value: relevantReels.length.toString(),
       },
       {
         name: "Reel Stats",
@@ -107,18 +117,17 @@ async function handleStatsCommand(interaction) {
       },
       {
         name: "Last Updated",
-        value: formatTime(user.reelUrls[0].lastUpdated),
+        value: formatTime(relevantReels[0].lastUpdated),
         inline: true,
       },
       {
         name: "Next Update in",
-        value: calculateTimeRemaining(user.reelUrls[0].lastUpdated),
+        value: calculateTimeRemaining(relevantReels[0].lastUpdated),
         inline: true,
       }
     )
     .setTimestamp();
 
-  // 8. Reply with the formatted message
   await interaction.reply({ embeds: [embed] });
 }
 
@@ -141,10 +150,10 @@ function calculateTimeRemaining(lastUpdated) {
 
   const now = new Date();
   const nextUpdate = new Date(lastUpdated);
-  nextUpdate.setHours(nextUpdate.getHours() + 8); // Add 8 hours to the last update time
+  nextUpdate.setHours(nextUpdate.getHours() + 8);
 
   const diffMs = nextUpdate - now;
-  if (diffMs <= 0) return "Update due now"; // If the time has passed
+  if (diffMs <= 0) return "Update due now";
 
   const hours = Math.floor(diffMs / (1000 * 60 * 60));
   const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));

@@ -18,6 +18,7 @@ const ReelUrlSchema = new mongoose.Schema({
   shortCode: String,
   submittedAt: Date,
   platform: String,
+  campaignId: { type: mongoose.Schema.Types.ObjectId, ref: "Campaign" },
   lastUpdated: { type: Date, default: Date.now }, // to track updated view changes
   stats: {
     views: Number,
@@ -49,6 +50,7 @@ const CampaignSchema = new mongoose.Schema({
 
 // Schema for agencies (e.g., Discord servers)
 const AgencySchema = new mongoose.Schema({
+  agencyId: { type: String, unique: true },
   discordServerId: { type: String, unique: true }, // Maps to Discord server ID
   serverName: String,
   isSubscribed: { type: Boolean, default: false }, // Indicates subscription status

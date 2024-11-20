@@ -96,6 +96,7 @@ async function handleSubmitCommand(interaction) {
     shortCode,
     submittedAt: new Date(),
     platform: "instagram",
+    campaignId: activeCampaign._id,
     stats: reelData,
   });
   user.serverStats.totalSubmissions += 1;
