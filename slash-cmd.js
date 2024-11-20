@@ -84,10 +84,9 @@ async function registerCommands() {
 
     console.log("Started refreshing application (/) commands.");
 
-    await rest.put(
-      Routes.applicationGuildCommands(process.env.DISCORD_BOT_ID),
-      { body: commands }
-    );
+    await rest.put(Routes.applicationCommands(process.env.DISCORD_BOT_ID), {
+      body: commands,
+    });
 
     console.log("Successfully reloaded application (/) commands.");
   } catch (error) {
