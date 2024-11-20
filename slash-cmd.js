@@ -60,6 +60,20 @@ const commands = [
   new SlashCommandBuilder()
     .setName("leaderboard")
     .setDescription("View top 10 users by engagement"),
+
+  new SlashCommandBuilder()
+    .setName("add-new-campaign")
+    .setDescription("Create a new campaign (restricted to server owner)"),
+
+  new SlashCommandBuilder()
+    .setName("register-server")
+    .setDescription("Register your Discord server (Owner only)")
+    .addStringOption((option) =>
+      option
+        .setName("server_name")
+        .setDescription("The name of your Discord server")
+        .setRequired(true)
+    ),
 ];
 
 async function registerCommands() {

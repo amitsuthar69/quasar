@@ -1,4 +1,4 @@
-const User = require("../models/user");
+const { User, Agency, Campaign } = require("../models/user");
 const verifyInstagramAccount = require("../helpers/verify");
 const fetchReelData = require("../helpers/reelData");
 
@@ -47,7 +47,50 @@ async function handleSubmitCommand(interaction) {
     );
   }
 
-  // 6. Save the reel data to the database
+  // 6. Find the server (agency)
+  const agency = await Agency.findOne({
+    discordServerId: interaction.guild.id,
+  });
+  if (!agency) {
+    return interaction.editReply("Server is not registered yet!");
+  }
+
+  // 7. Find the active campaign for this server
+  const activeCampaign = await Campaign.findOne({
+    agencyId: agency._id,
+    isActive: true,
+  });
+  if (!activeCampaign) {
+    return interaction.editReply("No active campaign found for this server.");
+  }
+
+  // 8. Calculate contribution (dummy logic, replace with actual data if needed)
+  const viewsContributed = reelData.views || 0; // Replace with actual calculation logic
+  const moneyEarned =
+    (viewsContributed / activeCampaign.viewsPerCap) *
+    activeCampaign.moneyPerCap;
+
+  // 9. Update user's campaign contributions
+  const existingContribution = user.campaigns.find(
+    (contribution) =>
+      contribution.campaignId.toString() === activeCampaign._id.toString()
+  );
+
+  if (existingContribution) {
+    // Update existing contribution
+    existingContribution.viewsContributed += viewsContributed;
+    existingContribution.moneyEarned += moneyEarned;
+  } else {
+    // Create a new contribution
+    user.campaigns.push({
+      campaignId: activeCampaign._id,
+      agencyId: agency._id,
+      viewsContributed,
+      moneyEarned,
+    });
+  }
+
+  // 10. Save reel data and campaign contributions to the user
   user.reelUrls.push({
     url,
     shortCode,

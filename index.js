@@ -6,6 +6,9 @@ const handleAddCommand = require("./helpers/add");
 const handleSubmitCommand = require("./helpers/submit");
 const handleStatsCommand = require("./helpers/stats");
 const handleLeaderboardCommand = require("./helpers/leaderboard");
+const handleCampaignForm = require("./helpers//campaignForm");
+const handleSubmitForm = require("./helpers/submitCampaignForm");
+const handleAgencyRegistration = require("./helpers/agency");
 
 const DB_URL = process.env.MONGODB_URL;
 
@@ -27,36 +30,48 @@ client.on("ready", () => {
 });
 
 client.on("interactionCreate", async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
-
   try {
-    switch (interaction.commandName) {
-      case "ping":
-        const startTime = Date.now();
-        await interaction.reply("Pong!");
-        const endTime = Date.now();
-        await interaction.editReply(`Pong! Latency: ${endTime - startTime}ms`);
-        break;
+    if (interaction.isChatInputCommand()) {
+      switch (interaction.commandName) {
+        case "ping":
+          const startTime = Date.now();
+          await interaction.reply("Pong!");
+          const endTime = Date.now();
+          await interaction.editReply(
+            `Pong! Latency: ${endTime - startTime}ms`
+          );
+          break;
 
-      case "register":
-        await handleRegisterCommand(interaction);
-        break;
+        case "register":
+          await handleRegisterCommand(interaction);
+          break;
 
-      case "add":
-        await handleAddCommand(interaction);
-        break;
+        case "add":
+          await handleAddCommand(interaction);
+          break;
 
-      case "submit":
-        await handleSubmitCommand(interaction);
-        break;
+        case "submit":
+          await handleSubmitCommand(interaction);
+          break;
 
-      case "stats":
-        await handleStatsCommand(interaction);
-        break;
+        case "stats":
+          await handleStatsCommand(interaction);
+          break;
 
-      case "leaderboard":
-        await handleLeaderboardCommand(interaction);
-        break;
+        case "leaderboard":
+          await handleLeaderboardCommand(interaction);
+          break;
+
+        case "add-new-campaign":
+          await handleCampaignForm(interaction);
+          break;
+
+        case "register-server":
+          await handleAgencyRegistration(interaction);
+          break;
+      }
+    } else if (interaction.isModalSubmit()) {
+      await handleSubmitForm(interaction);
     }
   } catch (error) {
     console.error("Error handling command:", error);

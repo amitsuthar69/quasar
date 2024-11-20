@@ -1,22 +1,49 @@
 const { EmbedBuilder } = require("discord.js");
-const User = require("../models/user");
+const { User, Campaign, Agency } = require("../models/user");
 
 async function handleStatsCommand(interaction) {
   // 1. Get user from the database
   const user = await User.findOne({ discordId: interaction.user.id });
-
-  // 2. Check if the user exists and has submitted reels
   if (!user || user.reelUrls.length === 0) {
     return interaction.reply("You haven't submitted any reels yet!");
   }
 
-  // 3. Initialize total view, like, and comment counters
+  const agency = await Agency.findOne({
+    discordServerId: interaction.guild.id,
+  });
+  if (!agency) {
+    return interaction.reply("This server is not registered as an agency.");
+  }
+
+  // 2. Retrieve the active campaign for the server (agency)
+  const activeCampaign = await Campaign.findOne({
+    isActive: true,
+    agencyId: agency._id,
+  });
+
+  if (!activeCampaign) {
+    return interaction.reply("No active campaign found for this server.");
+  }
+
+  // 3. Calculate total views and total money earned for the active campaign
+  const userContribution = user.campaigns.find(
+    (c) => c.campaignId.toString() === activeCampaign._id.toString()
+  );
+
   let totalViews = 0;
+  let totalMoney = 0;
+
+  if (userContribution) {
+    totalViews = userContribution.viewsContributed || 0;
+    totalMoney = userContribution.moneyEarned || 0;
+  }
+
+  // 4. Initialize total view, like, and comment counters
   let totalLikes = 0;
   let totalComments = 0;
   let reelsUpdated = 0;
 
-  // 4. Format reel statistics whilw checking 8 hour span
+  // 5. Format reel statistics while checking 8-hour span
   const now = Date.now();
   const eightHours = 8 * 60 * 60 * 1000;
 
@@ -48,12 +75,12 @@ async function handleStatsCommand(interaction) {
     await user.save();
   }
 
-  // 5. List Instagram usernames added by the user
+  // 6. List Instagram usernames added by the user
   const usernames = user.instagramAccounts
     .map((account) => account.username)
     .join(", ");
 
-  // Create the message with statistics
+  // 7. Create the message with statistics
   const embed = new EmbedBuilder()
     .setColor("#0099ff")
     .setTitle("Your Instagram Clips Statistics")
@@ -61,7 +88,7 @@ async function handleStatsCommand(interaction) {
       {
         name: "IG Reel Clips",
         value: user.reelUrls.length.toString(),
-      }, // Convert to string
+      },
       {
         name: "Reel Stats",
         value: updatedReels.join("\n") || "No stats available",
@@ -73,6 +100,10 @@ async function handleStatsCommand(interaction) {
       {
         name: "Total View count",
         value: totalViews.toLocaleString(),
+      },
+      {
+        name: "Estimated Earnings",
+        value: `$${totalMoney.toFixed(2)}`,
       },
       {
         name: "Last Updated",
@@ -87,14 +118,14 @@ async function handleStatsCommand(interaction) {
     )
     .setTimestamp();
 
-  // Reply with the formatted message
+  // 8. Reply with the formatted message
   await interaction.reply({ embeds: [embed] });
 }
 
 module.exports = handleStatsCommand;
 
 function formatTime(timestamp) {
-  if (!timestamp) return "Unknown"; // Handle missing timestamps
+  if (!timestamp) return "Unknown";
   const date = new Date(timestamp);
   return date.toLocaleString("en-US", {
     hour: "numeric",
@@ -106,7 +137,7 @@ function formatTime(timestamp) {
 }
 
 function calculateTimeRemaining(lastUpdated) {
-  if (!lastUpdated) return "Unknown"; // Handle missing timestamps
+  if (!lastUpdated) return "Unknown";
 
   const now = new Date();
   const nextUpdate = new Date(lastUpdated);
