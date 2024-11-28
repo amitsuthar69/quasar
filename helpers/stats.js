@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const { User, Campaign, Agency } = require("../models/user");
+const fetchReelData = require("../helpers/reelData");
 
 async function handleStatsCommand(interaction) {
   // 1. Get user from the database
