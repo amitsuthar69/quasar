@@ -1,9 +1,10 @@
 require("dotenv").config();
-const { User } = require("../models/user");
+const { User, Agency } = require("../models/user");
 
 async function handleAddCommand(interaction) {
   const platform = interaction.options.getString("platform");
   const username = interaction.options.getString("username");
+  const discordServerId = interaction.guild.id;
 
   if (platform !== "instagram") {
     return interaction.reply({
@@ -27,6 +28,17 @@ async function handleAddCommand(interaction) {
     );
   }
 
+  // Check if agency (server) exists
+  const agency = await Agency.findOne({ discordServerId });
+  if (!agency) {
+    return interaction.reply({
+      content: "This server is not registered as an agency.",
+      ephemeral: true,
+    });
+  }
+
+  const agencyId = agency._id;
+
   // Add the new Instagram account
   const verificationCode = Math.floor(100000 + Math.random() * 900000); // Generate a new code
   user.instagramAccounts.push({
@@ -34,6 +46,7 @@ async function handleAddCommand(interaction) {
     verified: false,
     verificationCode,
     verifiedAt: null,
+    agencyIds: [agencyId],
   });
 
   await user.save();

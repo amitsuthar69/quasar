@@ -19,12 +19,12 @@ async function fetchReelData(shortCode) {
     const data = response.data[0]?.items[0];
 
     if (!data) {
-      console.error("No data found in response");
+      console.error("No data found in response", data);
       return null;
     }
 
     return {
-      views: data.view_count || data.play_count || 0,
+      views: data.play_count || data.view_count || 0,
       likes: data.like_count || 0,
       comments: data.comment_count || 0,
       duration: data.video_duration || 0,

@@ -14,6 +14,12 @@ const commands = [
     .setDescription("Submit an Instagram Reel for tracking")
     .addStringOption((option) =>
       option
+        .setName("username")
+        .setDescription("Which account this reel belongs to")
+        .setRequired(true)
+    )
+    .addStringOption((option) =>
+      option
         .setName("url")
         .setDescription("The Instagram Reel URL")
         .setRequired(true)

@@ -5,7 +5,7 @@ const fetchReelData = require("../helpers/reelData");
 async function handleStatsCommand(interaction) {
   // 1. Get user from the database
   const user = await User.findOne({ discordId: interaction.user.id });
-  if (!user || user.reelUrls.length === 0) {
+  if (!user || user?.instagramAccounts[0]?.reelUrls?.length === 0) {
     return interaction.reply("You haven't submitted any reels yet!");
   }
 
@@ -15,6 +15,18 @@ async function handleStatsCommand(interaction) {
   });
   if (!agency) {
     return interaction.reply("This server is not registered as an agency.");
+  }
+
+  const linkedInstagramAccounts = user.instagramAccounts.filter((account) =>
+    account.agencyIds.some(
+      (agencyId) => agencyId.toString() === agency._id.toString()
+    )
+  );
+
+  if (linkedInstagramAccounts.length === 0) {
+    return interaction.reply(
+      "No Instagram account linked to the active campaign on this server."
+    );
   }
 
   // 3. Retrieve the active campaign for the server (agency)
@@ -45,8 +57,10 @@ async function handleStatsCommand(interaction) {
   let reelsUpdated = 0;
 
   // Filter only reels that are part of this campaign
-  const relevantReels = user.reelUrls.filter(
-    (reel) => reel.campaignId?.toString() === activeCampaign._id.toString()
+  const relevantReels = linkedInstagramAccounts.flatMap((account) =>
+    account.reelUrls.filter(
+      (reel) => reel.campaignId?.toString() === activeCampaign._id.toString()
+    )
   );
 
   if (relevantReels.length === 0) {
@@ -65,6 +79,7 @@ async function handleStatsCommand(interaction) {
         now - new Date(reel.lastUpdated).getTime() > eightHours;
 
       if (isOutdated) {
+        console.log("[8 hours elapsed] updating stats");
         const updatedStats = await fetchReelData(reel.shortCode);
         if (updatedStats) {
           reel.stats = updatedStats;
@@ -77,9 +92,9 @@ async function handleStatsCommand(interaction) {
       totalLikes += reel.stats.likes || 0;
       totalComments += reel.stats.comments || 0;
 
-      return `${reel.stats.views || 0}👀  ${reel.stats.likes || 0}❤️  ${
+      return `${reel.stats.views || 0} 👀  ${reel.stats.likes || 0} ❤️  ${
         reel.stats.comments || 0
-      }💭`;
+      } 💭`;
     })
   );
 
@@ -88,7 +103,7 @@ async function handleStatsCommand(interaction) {
   }
 
   // 6. Prepare the response
-  const usernames = user.instagramAccounts
+  const usernames = linkedInstagramAccounts
     .map((account) => account.username)
     .join(", ");
 
@@ -129,7 +144,7 @@ async function handleStatsCommand(interaction) {
     )
     .setTimestamp();
 
-  await interaction.reply({ embeds: [embed] });
+  await interaction.reply({ embeds: [embed], ephemeral: true });
 }
 
 module.exports = handleStatsCommand;

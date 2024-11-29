@@ -1,9 +1,10 @@
 require("dotenv").config();
-const { User } = require("../models/user");
+const { User, Agency } = require("../models/user");
 
 async function handleRegisterCommand(interaction) {
   const platform = interaction.options.getString("platform");
   const username = interaction.options.getString("username");
+  const discordServerId = interaction.guild.id;
 
   // 1. check for selected platform
   if (platform !== "instagram") {
@@ -19,6 +20,17 @@ async function handleRegisterCommand(interaction) {
   // 3. Check if user already exists
   let user = await User.findOne({ discordId: interaction.user.id });
 
+  // Check if agency (server) exists
+  const agency = await Agency.findOne({ discordServerId });
+  if (!agency) {
+    return interaction.reply({
+      content: "This server is not registered as an agency.",
+      ephemeral: true,
+    });
+  }
+
+  const agencyId = agency._id;
+
   // 4. Create new user in the database if new user
   if (!user) {
     user = new User({
@@ -30,6 +42,7 @@ async function handleRegisterCommand(interaction) {
           verified: false,
           verificationCode,
           verifiedAt: null,
+          agencyIds: [agencyId],
         },
       ],
       reelUrls: [],

@@ -1,18 +1,5 @@
 const mongoose = require("mongoose");
 
-// Schema for an Instagram account linked to a user
-const InstagramAccountSchema = new mongoose.Schema({
-  username: String,
-  verified: Boolean,
-  verificationCode: String,
-  verifiedAt: Date,
-  totalReels: Number,
-  totalViews: Number,
-  totalLikes: Number,
-  totalComments: Number,
-  averageEngagementRate: Number,
-});
-
 const ReelUrlSchema = new mongoose.Schema({
   url: String,
   shortCode: String,
@@ -26,6 +13,20 @@ const ReelUrlSchema = new mongoose.Schema({
     comments: Number,
     engagement: Number,
   },
+});
+
+// Schema for an Instagram account linked to a user
+const InstagramAccountSchema = new mongoose.Schema({
+  username: String,
+  verified: Boolean,
+  verificationCode: String,
+  verifiedAt: Date,
+  totalReels: Number,
+  totalViews: Number,
+  totalLikes: Number,
+  totalComments: Number,
+  reelUrls: [ReelUrlSchema], // Reels submitted by this account
+  agencyIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Agency" }],
 });
 
 // Schema for statistics related to a server (agency-specific)
@@ -72,7 +73,6 @@ const UserSchema = new mongoose.Schema(
     discordId: { type: String, unique: true }, // Maps to Discord user ID
     discordName: String,
     instagramAccounts: [InstagramAccountSchema], // User's linked Instagram accounts
-    reelUrls: [ReelUrlSchema], // Reels submitted by the user
     serverStats: ServerStatsSchema, // Stats for the server the user belongs to
     campaigns: [CampaignContributionSchema], // Contributions and earnings per campaign
   },

@@ -5,49 +5,6 @@ const fetchReelData = require("../helpers/reelData");
 async function handleSubmitCommand(interaction) {
   await interaction.deferReply();
 
-  // 1. Check if user has registered
-  const user = await User.findOne({ discordId: interaction.user.id });
-  if (!user) {
-    return interaction.editReply("You must register first using `/register`.");
-  }
-
-  // 2. Verify the user's Instagram bio code
-  const isVerified = await verifyInstagramAccount(
-    user.instagramAccounts[0].username,
-    user.instagramAccounts[0].verificationCode
-  );
-  if (!isVerified) {
-    return interaction.editReply(
-      "Verification failed. Please ensure your bio contains the correct verification code."
-    );
-  }
-
-  // 3. Validate Reel URL
-  const url = interaction.options.getString("url");
-  if (!isValidInstagramReelUrl(url)) {
-    return interaction.editReply(
-      "Invalid Instagram Reel URL. Please provide a valid Instagram Reel link."
-    );
-  }
-
-  // 4. Check for already submitted reels
-  const shortCode = extractShortCode(url);
-  const existingReel = user.reelUrls.find(
-    (reel) => reel.shortCode === shortCode
-  );
-  if (existingReel) {
-    return interaction.editReply("This reel has already been submitted!");
-  }
-
-  // 5. Fetch and add reel data
-  const reelData = await fetchReelData(shortCode);
-  if (!reelData) {
-    return interaction.editReply(
-      "Failed to fetch reel data. Please check the URL and try again."
-    );
-  }
-
-  // 6. Find the server (agency)
   const agency = await Agency.findOne({
     discordServerId: interaction.guild.id,
   });
@@ -62,6 +19,81 @@ async function handleSubmitCommand(interaction) {
   });
   if (!activeCampaign) {
     return interaction.editReply("No active campaign found for this server.");
+  }
+
+  // Check if user has registered
+  const user = await User.findOne({ discordId: interaction.user.id });
+  if (!user) {
+    return interaction.editReply("You must register first using `/register`.");
+  }
+
+  const username = interaction.options.getString("username");
+  if (!username) {
+    return interaction.editReply(
+      "Please provide the Instagram account username."
+    );
+  }
+
+  // ind the Instagram account associated with this username
+  const instagramAccount = user.instagramAccounts.find(
+    (account) => account.username === username
+  );
+
+  if (!instagramAccount) {
+    return interaction.editReply(
+      `No Instagram account with username "${username}" is linked to your profile.`
+    );
+  }
+
+  // Check if the Instagram account is linked to the current server/agency
+  const isLinkedToAgency = instagramAccount.agencyIds.some(
+    (agencyId) => agencyId.toString() === agency._id.toString()
+  );
+
+  if (!isLinkedToAgency) {
+    return interaction.editReply(
+      `The Instagram account "${username}" is not linked to this server/agency. Please link it before submitting reels.`
+    );
+  }
+
+  // Verify the user's Instagram bio code
+  const isVerified = await verifyInstagramAccount(
+    instagramAccount.username,
+    instagramAccount.verificationCode
+  );
+  if (!isVerified) {
+    return interaction.editReply(
+      "Verification failed. Please ensure your bio contains the correct verification code."
+    );
+  }
+
+  // 3. Validate Reel URL
+  const url = interaction.options.getString("url");
+  if (!isValidInstagramReelUrl(url)) {
+    console.log("checking for: ", url);
+    return interaction.editReply(
+      "Invalid Instagram Reel URL. Please provide a valid Instagram Reel link."
+    );
+  }
+
+  const shortCode = extractShortCode(url);
+
+  // 3. Check if the reel has already been submitted for this account
+  const existingReel = instagramAccount.reelUrls.find((reel) => {
+    console.log(reel);
+    reel.shortCode === shortCode;
+  });
+
+  if (existingReel) {
+    return interaction.editReply("This reel has already been submitted!");
+  }
+
+  // 5. Fetch and add reel data
+  const reelData = await fetchReelData(shortCode);
+  if (!reelData) {
+    return interaction.editReply(
+      "Failed to fetch reel data. Please check the URL and try again."
+    );
   }
 
   // 8. Calculate contribution (dummy logic, replace with actual data if needed)
@@ -91,7 +123,7 @@ async function handleSubmitCommand(interaction) {
   }
 
   // 10. Save reel data and campaign contributions to the user
-  user.reelUrls.push({
+  instagramAccount.reelUrls.push({
     url,
     shortCode,
     submittedAt: new Date(),
@@ -110,6 +142,7 @@ module.exports = handleSubmitCommand;
 function isValidInstagramReelUrl(url) {
   try {
     const urlObj = new URL(url);
+    console.log("host: ", urlObj.hostname);
     return (
       urlObj.hostname === "www.instagram.com" ||
       urlObj.hostname === "instagram.com"
