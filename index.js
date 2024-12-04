@@ -35,7 +35,10 @@ client.on("interactionCreate", async (interaction) => {
       switch (interaction.commandName) {
         case "ping":
           const startTime = Date.now();
-          await interaction.reply("Pong!");
+          await interaction.reply({
+            content: "Pong!",
+            ephemeral: true,
+          });
           const endTime = Date.now();
           await interaction.editReply({
             content: `Pong! Latency: ${endTime - startTime}ms`,
