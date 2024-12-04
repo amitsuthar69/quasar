@@ -21,6 +21,16 @@ async function handleAddCommand(interaction) {
     });
   }
 
+  // Check if agency (server) exists
+  const agency = await Agency.findOne({ discordServerId });
+  if (!agency) {
+    return interaction.reply({
+      content: "This server is not registered as an agency.",
+      ephemeral: true,
+    });
+  }
+  const agencyId = agency._id;
+
   // Check if username already exists in the user's Instagram accounts
   const existingAccount = user.instagramAccounts.find(
     (account) => account.username === username
@@ -31,17 +41,6 @@ async function handleAddCommand(interaction) {
       ephemeral: true,
     });
   }
-
-  // Check if agency (server) exists
-  const agency = await Agency.findOne({ discordServerId });
-  if (!agency) {
-    return interaction.reply({
-      content: "This server is not registered as an agency.",
-      ephemeral: true,
-    });
-  }
-
-  const agencyId = agency._id;
 
   // Add the new Instagram account
   const verificationCode = Math.floor(100000 + Math.random() * 900000); // Generate a new code

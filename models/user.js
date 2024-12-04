@@ -51,7 +51,6 @@ const CampaignSchema = new mongoose.Schema({
 
 // Schema for agencies (e.g., Discord servers)
 const AgencySchema = new mongoose.Schema({
-  agencyId: { type: String, unique: true },
   discordServerId: { type: String, unique: true }, // Maps to Discord server ID
   serverName: String,
   isSubscribed: { type: Boolean, default: false }, // Indicates subscription status

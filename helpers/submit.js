@@ -45,17 +45,6 @@ async function handleSubmitCommand(interaction) {
     );
   }
 
-  // Check if the Instagram account is linked to the current server/agency
-  const isLinkedToAgency = instagramAccount.agencyIds.some(
-    (agencyId) => agencyId.toString() === agency._id.toString()
-  );
-
-  if (!isLinkedToAgency) {
-    return interaction.editReply(
-      `The Instagram account "${username}" is not linked to this server/agency. Please link it before submitting reels.`
-    );
-  }
-
   // Verify the user's Instagram bio code
   const isVerified = await verifyInstagramAccount(
     instagramAccount.username,
@@ -65,6 +54,15 @@ async function handleSubmitCommand(interaction) {
     return interaction.editReply(
       "Verification failed. Please ensure your bio contains the correct verification code."
     );
+  }
+
+  // Check if the Instagram account is linked to the current server/agency
+  const isLinkedToAgency = instagramAccount.agencyIds.some(
+    (agencyId) => agencyId.toString() === agency._id.toString()
+  );
+
+  if (!isLinkedToAgency) {
+    instagramAccount.agencyIds.push(agency._id);
   }
 
   // 3. Validate Reel URL
