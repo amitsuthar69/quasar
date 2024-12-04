@@ -37,6 +37,7 @@ async function handleAgencyRegistration(interaction) {
 
     return interaction.reply({
       content: `Successfully registered **${serverName}**! 🎉`,
+      ephemeral: true,
     });
   } catch (error) {
     console.error("Error registering server:", error);

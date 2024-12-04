@@ -3,7 +3,7 @@ const verifyInstagramAccount = require("../helpers/verify");
 const fetchReelData = require("../helpers/reelData");
 
 async function handleSubmitCommand(interaction) {
-  await interaction.deferReply();
+  await interaction.deferReply({ ephemeral: true });
 
   const agency = await Agency.findOne({
     discordServerId: interaction.guild.id,
@@ -12,7 +12,7 @@ async function handleSubmitCommand(interaction) {
     return interaction.editReply("Server is not registered yet!");
   }
 
-  // 7. Find the active campaign for this server
+  // 1. Find the active campaign for this server
   const activeCampaign = await Campaign.findOne({
     agencyId: agency._id,
     isActive: true,
@@ -21,7 +21,7 @@ async function handleSubmitCommand(interaction) {
     return interaction.editReply("No active campaign found for this server.");
   }
 
-  // Check if user has registered
+  // 2. Check if user has registered
   const user = await User.findOne({ discordId: interaction.user.id });
   if (!user) {
     return interaction.editReply("You must register first using `/register`.");
@@ -34,7 +34,7 @@ async function handleSubmitCommand(interaction) {
     );
   }
 
-  // ind the Instagram account associated with this username
+  // Find the Instagram account associated with this username
   const instagramAccount = user.instagramAccounts.find(
     (account) => account.username === username
   );
@@ -80,8 +80,8 @@ async function handleSubmitCommand(interaction) {
 
   // 3. Check if the reel has already been submitted for this account
   const existingReel = instagramAccount.reelUrls.find((reel) => {
-    console.log(reel);
-    reel.shortCode === shortCode;
+    console.log(`Comparing: ${reel.shortCode} === ${shortCode}`);
+    return reel.shortCode === shortCode;
   });
 
   if (existingReel) {
@@ -96,8 +96,8 @@ async function handleSubmitCommand(interaction) {
     );
   }
 
-  // 8. Calculate contribution (dummy logic, replace with actual data if needed)
-  const viewsContributed = reelData.views || 0; // Replace with actual calculation logic
+  // 6. Calculate contribution
+  const viewsContributed = reelData.views || 0;
   const moneyEarned =
     (viewsContributed / activeCampaign.viewsPerCap) *
     activeCampaign.moneyPerCap;
@@ -108,8 +108,8 @@ async function handleSubmitCommand(interaction) {
       contribution.campaignId.toString() === activeCampaign._id.toString()
   );
 
+  // Update existing contribution
   if (existingContribution) {
-    // Update existing contribution
     existingContribution.viewsContributed += viewsContributed;
     existingContribution.moneyEarned += moneyEarned;
   } else {

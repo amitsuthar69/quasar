@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require("discord.js");
+const { EmbedBuilder, escapeHeading } = require("discord.js");
 const { User, Campaign, Agency } = require("../models/user");
 const fetchReelData = require("../helpers/reelData");
 
@@ -6,7 +6,10 @@ async function handleStatsCommand(interaction) {
   // 1. Get user from the database
   const user = await User.findOne({ discordId: interaction.user.id });
   if (!user || user?.instagramAccounts[0]?.reelUrls?.length === 0) {
-    return interaction.reply("You haven't submitted any reels yet!");
+    return interaction.reply({
+      content: "You haven't submitted any reels yet!",
+      ephemeral: true,
+    });
   }
 
   // 2. Retrieve the current server (agency)
@@ -14,7 +17,10 @@ async function handleStatsCommand(interaction) {
     discordServerId: interaction.guild.id,
   });
   if (!agency) {
-    return interaction.reply("This server is not registered as an agency.");
+    return interaction.reply({
+      content: "This server is not registered as an agency.",
+      ephemeral: true,
+    });
   }
 
   const linkedInstagramAccounts = user.instagramAccounts.filter((account) =>
@@ -24,9 +30,11 @@ async function handleStatsCommand(interaction) {
   );
 
   if (linkedInstagramAccounts.length === 0) {
-    return interaction.reply(
-      "No Instagram account linked to the active campaign on this server."
-    );
+    return interaction.reply({
+      content:
+        "No Instagram account linked to the active campaign on this server.",
+      ephemeral: true,
+    });
   }
 
   // 3. Retrieve the active campaign for the server (agency)
@@ -36,7 +44,10 @@ async function handleStatsCommand(interaction) {
   });
 
   if (!activeCampaign) {
-    return interaction.reply("No active campaign found for this server.");
+    return interaction.reply({
+      content: "No active campaign found for this server.",
+      ephemeral: true,
+    });
   }
 
   // 4. Filter the user's reels for this server's active campaign
@@ -45,9 +56,11 @@ async function handleStatsCommand(interaction) {
   );
 
   if (!userContribution) {
-    return interaction.reply(
-      "You have not contributed to the active campaign on this server."
-    );
+    return interaction.reply({
+      content:
+        "You have not contributed to the active campaign on this server.",
+      ephemeral: true,
+    });
   }
 
   let totalViews = 0;
@@ -64,9 +77,11 @@ async function handleStatsCommand(interaction) {
   );
 
   if (relevantReels.length === 0) {
-    return interaction.reply(
-      "You have not submitted any reels for the active campaign on this server."
-    );
+    return interaction.reply({
+      content:
+        "You have not submitted any reels for the active campaign on this server.",
+      ephemeral: true,
+    });
   }
 
   // 5. Update and calculate reel statistics

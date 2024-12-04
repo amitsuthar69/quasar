@@ -15,7 +15,10 @@ async function handleAddCommand(interaction) {
 
   const user = await User.findOne({ discordId: interaction.user.id });
   if (!user) {
-    return interaction.reply("You must register first using `/register`.");
+    return interaction.reply({
+      content: "You must register first using `/register`.",
+      ephemeral: true,
+    });
   }
 
   // Check if username already exists in the user's Instagram accounts
@@ -23,9 +26,10 @@ async function handleAddCommand(interaction) {
     (account) => account.username === username
   );
   if (existingAccount) {
-    return interaction.reply(
-      "This Instagram account is already linked to your profile."
-    );
+    return interaction.reply({
+      content: "This Instagram account is already linked to your profile.",
+      ephemeral: true,
+    });
   }
 
   // Check if agency (server) exists
@@ -50,9 +54,10 @@ async function handleAddCommand(interaction) {
   });
 
   await user.save();
-  await interaction.reply(
-    `Account added successfully! Your verification code is **${verificationCode}**. Please add this code to your Instagram bio for verification.`
-  );
+  await interaction.reply({
+    content: `Account added successfully! Your verification code is **${verificationCode}**. Please add this code to your Instagram bio for verification.`,
+    ephemeral: true,
+  });
 }
 
 module.exports = handleAddCommand;

@@ -7,7 +7,10 @@ async function handleLeaderboardCommand(interaction) {
     discordServerId: interaction.guild.id,
   });
   if (!agency) {
-    return interaction.reply("This server is not registered as an agency.");
+    return interaction.reply({
+      content: "This server is not registered as an agency.",
+      ephemeral: true,
+    });
   }
 
   // 2. Find the active campaign for this agency
@@ -16,7 +19,10 @@ async function handleLeaderboardCommand(interaction) {
     isActive: true,
   });
   if (!activeCampaign) {
-    return interaction.reply("No active campaign found for this server.");
+    return interaction.reply({
+      content: "No active campaign found for this server.",
+      ephemeral: true,
+    });
   }
 
   // 3. Retrieve all users and calculate total views and money earned for the active campaign
@@ -47,9 +53,10 @@ async function handleLeaderboardCommand(interaction) {
     .slice(0, 10); // Take top 10
 
   if (leaderboard.length === 0) {
-    return interaction.reply(
-      "No users have participated in the active campaign yet."
-    );
+    return interaction.reply({
+      content: "No users have participated in the active campaign yet.",
+      ephemeral: true,
+    });
   }
 
   // 4. Generate leaderboard message including money earned
@@ -65,9 +72,10 @@ async function handleLeaderboardCommand(interaction) {
     .join("\n");
 
   // 5. Send the leaderboard message
-  await interaction.reply(
-    `**Top 10 Leaderboard (Active Campaign)**\n${leaderboardMessage}`
-  );
+  await interaction.reply({
+    content: `**Top 10 Leaderboard (Active Campaign)**\n${leaderboardMessage}`,
+    ephemeral: true,
+  });
 }
 
 module.exports = handleLeaderboardCommand;

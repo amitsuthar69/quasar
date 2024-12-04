@@ -41,7 +41,7 @@ client.on("interactionCreate", async (interaction) => {
           });
           const endTime = Date.now();
           await interaction.editReply({
-            content: `Pong! Latency: ${endTime - startTime}ms`,
+            content: `Pong!! Latency: ${endTime - startTime}ms`,
             ephemeral: true,
           });
           break;

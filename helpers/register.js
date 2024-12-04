@@ -56,13 +56,16 @@ async function handleRegisterCommand(interaction) {
     await user.save();
 
     // 5. respond with code
-    await interaction.reply(
-      `Registration successful! Your verification code is **${verificationCode}**. Please keep this code in your Instagram bio to verify.`
-    );
+    await interaction.reply({
+      content: `Registration successful! Your verification code is **${verificationCode}**. Please keep this code in your Instagram bio to verify.`,
+      ephemeral: true,
+    });
   } else {
-    await interaction.reply(
-      "You are already registered. Use `/add` to link another Instagram account."
-    );
+    await interaction.reply({
+      content:
+        "You are already registered. Use `/add` to link another Instagram account.",
+      ephemeral: true,
+    });
   }
 }
 
