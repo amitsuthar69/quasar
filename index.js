@@ -37,9 +37,10 @@ client.on("interactionCreate", async (interaction) => {
           const startTime = Date.now();
           await interaction.reply("Pong!");
           const endTime = Date.now();
-          await interaction.editReply(
-            `Pong! Latency: ${endTime - startTime}ms`
-          );
+          await interaction.editReply({
+            content: `Pong! Latency: ${endTime - startTime}ms`,
+            ephemeral: true,
+          });
           break;
 
         case "register":
