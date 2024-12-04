@@ -56,8 +56,6 @@ const updateReelStats = async () => {
           (r) => r.shortCode === item.reelShortCode
         );
 
-        console.log("U I R: ", user, instagramAccount, reel);
-
         if (reel) {
           // Fetch updated stats
           const updatedStats = await fetchReelData(reel.shortCode);

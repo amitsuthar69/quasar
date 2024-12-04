@@ -70,7 +70,6 @@ async function handleSubmitCommand(interaction) {
   // 3. Validate Reel URL
   const url = interaction.options.getString("url");
   if (!isValidInstagramReelUrl(url)) {
-    console.log("checking for: ", url);
     return interaction.editReply(
       "Invalid Instagram Reel URL. Please provide a valid Instagram Reel link."
     );
@@ -80,7 +79,6 @@ async function handleSubmitCommand(interaction) {
 
   // 3. Check if the reel has already been submitted for this account
   const existingReel = instagramAccount.reelUrls.find((reel) => {
-    console.log(`Comparing: ${reel.shortCode} === ${shortCode}`);
     return reel.shortCode === shortCode;
   });
 
@@ -142,7 +140,6 @@ module.exports = handleSubmitCommand;
 function isValidInstagramReelUrl(url) {
   try {
     const urlObj = new URL(url);
-    console.log("host: ", urlObj.hostname);
     return (
       urlObj.hostname === "www.instagram.com" ||
       urlObj.hostname === "instagram.com"
