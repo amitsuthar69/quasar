@@ -1,4 +1,5 @@
 require("dotenv").config();
+require("./jobs/updateStatsJob");
 const { Client, GatewayIntentBits } = require("discord.js");
 const mongoose = require("mongoose");
 const handleRegisterCommand = require("./helpers/register");
