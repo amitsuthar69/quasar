@@ -65,9 +65,9 @@ async function handleLeaderboardCommand(interaction) {
       (user, index) =>
         `#${index + 1} **${
           user.username
-        }** - Views: ${user.totalViews.toLocaleString()} | Money: $${user.totalMoney.toFixed(
+        }** - Views: ${user.totalViews.toLocaleString()} | Money: ${user.totalMoney.toFixed(
           2
-        )}`
+        )} ${activeCampaign.currency}`
     )
     .join("\n");
 
