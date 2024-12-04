@@ -129,7 +129,7 @@ async function handleStatsCommand(interaction) {
       },
       {
         name: "Estimated Earnings",
-        value: `$${totalMoney.toFixed(2)}`,
+        value: `${totalMoney.toFixed(2)} ${activeCampaign.currency}`,
       },
       {
         name: "Last Updated",
