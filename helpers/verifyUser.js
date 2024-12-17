@@ -2,7 +2,6 @@ const { User, Agency } = require("../models/user");
 const verifyInstagramAccount = require("../helpers/verify");
 
 async function verifyUser(interaction) {
-  console.log("Verification initiated!");
   await interaction.deferReply({ ephemeral: true });
 
   const agency = await Agency.findOne({
@@ -26,14 +25,11 @@ async function verifyUser(interaction) {
   }
 
   instagramAccounts.forEach(async (account) => {
-    console.log("Verifying an account");
     if (!account.verified) {
-      console.log("fetching bio...");
       const codeExistsInBio = await verifyInstagramAccount(
         account.username,
         account.verificationCode
       );
-      console.log("fetching done!");
       if (!codeExistsInBio) {
         return interaction.editReply(
           `Verification failed for **${account.username}**.
@@ -45,7 +41,6 @@ and try the /verify command again!
         account.verified = true;
         account.verifiedAt = new Date();
         user.save();
-        console.log("verified!");
         return interaction.editReply("Verification completed!");
       }
     }
