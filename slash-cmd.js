@@ -14,12 +14,6 @@ const commands = [
     .setDescription("Submit an Instagram Reel for tracking")
     .addStringOption((option) =>
       option
-        .setName("username")
-        .setDescription("Which account this reel belongs to")
-        .setRequired(true)
-    )
-    .addStringOption((option) =>
-      option
         .setName("url")
         .setDescription("The Instagram Reel URL")
         .setRequired(true)
@@ -79,6 +73,12 @@ const commands = [
         .setName("server_name")
         .setDescription("The name of your Discord server")
         .setRequired(true)
+    ),
+
+  new SlashCommandBuilder()
+    .setName("verify")
+    .setDescription(
+      "Verifies the user account and returns the verification status."
     ),
 ];
 

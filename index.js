@@ -10,6 +10,7 @@ const handleLeaderboardCommand = require("./helpers/leaderboard");
 const handleCampaignForm = require("./helpers//campaignForm");
 const handleSubmitForm = require("./helpers/submitCampaignForm");
 const handleAgencyRegistration = require("./helpers/agency");
+const verifyUser = require("./helpers/verifyUser");
 
 const DB_URL = process.env.MONGODB_URL;
 
@@ -73,6 +74,9 @@ client.on("interactionCreate", async (interaction) => {
 
         case "register-server":
           await handleAgencyRegistration(interaction);
+          break;
+        case "verify":
+          await verifyUser(interaction);
           break;
       }
     } else if (interaction.isModalSubmit()) {

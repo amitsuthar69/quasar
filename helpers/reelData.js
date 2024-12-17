@@ -24,6 +24,7 @@ async function fetchReelData(shortCode) {
     }
 
     return {
+      username: data.user.username,
       views: data.play_count || data.view_count || 0,
       likes: data.like_count || 0,
       comments: data.comment_count || 0,
