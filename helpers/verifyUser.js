@@ -26,9 +26,6 @@ async function verifyUser(interaction) {
 
   instagramAccounts.forEach(async (account) => {
     if (!account.verified) {
-      await interaction.editReply(
-        "Account not verified, initializing instagram bio check..."
-      );
       const codeExistsInBio = await verifyInstagramAccount(
         account.username,
         account.verificationCode
